@@ -9,4 +9,5 @@ export const LOCAL_STORAGE_KEYS = {
   SIDEBAR_MINIMIZED_SECTIONS: 'sidebarMinimizedSections',
   CAPTAIN_ASSISTANT_TOOLS_BANNER_DISMISSED:
     'captain_assistant_tools_banner_dismissed',
+  CONVERSATION_GRID_VIEW: 'conversationGridView',
 };

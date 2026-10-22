@@ -7,6 +7,8 @@ import {
   useContactConversationNavigation,
 } from 'dashboard/composables/useContactConversationNavigation';
 import { useAccount } from 'dashboard/composables/useAccount';
+import { useConversationGridView } from 'dashboard/composables/useConversationGridView';
+import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import ChatList from '../../../components/ChatList.vue';
 import ConversationBox from '../../../components/widgets/conversation/ConversationBox.vue';
 import wootConstants from 'dashboard/constants/globals';
@@ -15,6 +17,7 @@ import CmdBarConversationSnooze from 'dashboard/routes/dashboard/commands/CmdBar
 import { emitter } from 'shared/helpers/mitt';
 import SidepanelSwitch from 'dashboard/components-next/Conversation/SidepanelSwitch.vue';
 import ConversationSidebar from 'dashboard/components/widgets/conversation/ConversationSidebar.vue';
+import ConversationGrid from 'dashboard/components-next/Conversation/ConversationGrid/ConversationGrid.vue';
 
 export default {
   components: {
@@ -23,6 +26,7 @@ export default {
     CmdBarConversationSnooze,
     SidepanelSwitch,
     ConversationSidebar,
+    ConversationGrid,
   },
   beforeRouteLeave(to, from, next) {
     // Clear selected state if navigating away from a conversation to a route without a conversationId to prevent stale data issues
@@ -62,6 +66,7 @@ export default {
     const { uiSettings, updateUISettings, isOnExpandedLayout } =
       useUISettings();
     const { accountId } = useAccount();
+    const { isGridView } = useConversationGridView();
     provide(
       CONTACT_CONVERSATION_NAVIGATION,
       useContactConversationNavigation()
@@ -72,6 +77,7 @@ export default {
       updateUISettings,
       isOnExpandedLayout,
       accountId,
+      isGridView,
     };
   },
   data() {
@@ -84,6 +90,14 @@ export default {
       chatList: 'getAllConversations',
       currentChat: 'getSelectedChat',
     }),
+    // The grid covers the plain conversation lists; folders and the
+    // mentions/unattended/participating views keep the list.
+    supportsGridView() {
+      return !this.conversationType && !Number(this.foldersId);
+    },
+    showGridView() {
+      return this.isGridView && this.supportsGridView && !this.conversationId;
+    },
     showConversationList() {
       return this.isOnExpandedLayout ? !this.conversationId : true;
     },
@@ -102,6 +116,19 @@ export default {
   watch: {
     conversationId() {
       this.fetchConversationIfUnavailable();
+    },
+    isGridView(isGridView) {
+      // Switching to the grid from an open conversation goes back to the grid.
+      if (isGridView && this.supportsGridView && this.conversationId) {
+        this.$router.push(
+          conversationListPageURL({
+            accountId: this.accountId,
+            inboxId: this.inboxId,
+            label: this.label,
+            teamId: this.teamId,
+          })
+        );
+      }
     },
   },
 
@@ -198,7 +225,14 @@ export default {
 
 <template>
   <section class="flex w-full h-full min-w-0">
+    <ConversationGrid
+      v-if="showGridView"
+      :inbox-id="inboxId"
+      :label="label"
+      :team-id="teamId"
+    />
     <ChatList
+      v-if="!showGridView"
       :show-conversation-list="showConversationList"
       :conversation-inbox="inboxId"
       :label="label"
@@ -209,7 +243,7 @@ export default {
       @conversation-load="onConversationLoad"
     />
     <ConversationBox
-      v-if="showMessageView"
+      v-if="showMessageView && !showGridView"
       :inbox-id="inboxId"
       :is-on-expanded-layout="isOnExpandedLayout"
     >

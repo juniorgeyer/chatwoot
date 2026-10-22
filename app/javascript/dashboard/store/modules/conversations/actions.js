@@ -12,6 +12,7 @@ import {
   isOnParticipatingView,
   isOnUnattendedView,
   isOnFoldersView,
+  setContacts,
 } from './helpers/actionHelpers';
 import messageReadActions from './actions/messageReadActions';
 import messageTranslateActions from './actions/messageTranslateActions';
@@ -159,6 +160,18 @@ const actions = {
         throw error;
       }
     });
+  },
+
+  // The grid view loads its own pages, apart from the list's filters and
+  // pagination, and merges them into the same store so realtime events apply.
+  fetchGridConversations: async ({ commit, dispatch }, params) => {
+    const {
+      data: { data },
+    } = await ConversationApi.get(params);
+    commit(types.SET_ALL_CONVERSATION, data.payload);
+    dispatch('conversationLabels/setBulkConversationLabels', data.payload);
+    setContacts(commit, data.payload);
+    return data.payload;
   },
 
   emptyAllConversations({ commit }) {

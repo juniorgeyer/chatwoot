@@ -144,5 +144,29 @@
     "MESSAGE_READ": "Read",
     "SENDING": "Sending",
     "UNREAD_COUNT_OVERFLOW": "9+"
+  },
+  "CONVERSATION_GRID": {
+    "TITLE": "Live conversations",
+    "SWITCH_TO_GRID": "Show as grid",
+    "SWITCH_TO_LIST": "Show as list",
+    "SEARCH_PLACEHOLDER": "Search conversations, customers...",
+    "EMPTY": "No conversations in this tab.",
+    "TABS": {
+      "ALL": "All",
+      "WAITING": "Waiting",
+      "AI": "AI responding",
+      "HUMAN": "Human"
+    },
+    "BADGES": {
+      "NO_REPLY": "No reply",
+      "AI_RESPONDING": "AI responding"
+    },
+    "PRIVATE_NOTE": "Private note",
+    "ATTACHMENT": "Attachment",
+    "REPLY_PLACEHOLDER": "Reply...",
+    "ATTACH": "Attach file",
+    "REMOVE_ATTACHMENT": "Remove attachment",
+    "EMOJI": "Emoji",
+    "SEND": "Send"
   }
 }

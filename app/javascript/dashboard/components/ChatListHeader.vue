@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { formatNumber } from '@chatwoot/utils';
 import wootConstants from 'dashboard/constants/globals';
+import { useConversationGridView } from 'dashboard/composables/useConversationGridView';
 
 import ConversationBasicFilter from './widgets/conversation/ConversationBasicFilter.vue';
 import SwitchLayout from 'dashboard/routes/dashboard/conversation/search/SwitchLayout.vue';
@@ -17,6 +18,7 @@ const props = defineProps({
   isOnExpandedLayout: { type: Boolean, required: true },
   conversationStats: { type: Object, required: true },
   isListLoading: { type: Boolean, required: true },
+  showGridToggle: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -28,6 +30,7 @@ const emit = defineEmits([
 ]);
 
 const { uiSettings, updateUISettings } = useUISettings();
+const { setGridView } = useConversationGridView();
 
 const onBasicFilterChange = (value, type) => {
   emit('basicFilterChange', value, type);
@@ -174,6 +177,16 @@ const toggleConversationLayout = () => {
         :is-on-expanded-layout="isOnExpandedLayout"
         :show-status-filter="!hasAppliedFiltersOrActiveFolders"
         @change-filter="onBasicFilterChange"
+      />
+      <NextButton
+        v-if="showGridToggle"
+        v-tooltip.left="$t('CONVERSATION_GRID.SWITCH_TO_GRID')"
+        icon="i-lucide-layout-grid"
+        slate
+        xs
+        faded
+        class="flex-shrink-0 md:inline-flex hidden"
+        @click="setGridView(true)"
       />
       <SwitchLayout
         :is-on-expanded-layout="isOnExpandedLayout"

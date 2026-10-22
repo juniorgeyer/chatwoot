@@ -144,5 +144,29 @@
     "MESSAGE_READ": "Lida",
     "SENDING": "Enviando",
     "UNREAD_COUNT_OVERFLOW": "9+"
+  },
+  "CONVERSATION_GRID": {
+    "TITLE": "Conversas ao vivo",
+    "SWITCH_TO_GRID": "Ver em grade",
+    "SWITCH_TO_LIST": "Ver em lista",
+    "SEARCH_PLACEHOLDER": "Buscar conversas, clientes...",
+    "EMPTY": "Nenhuma conversa nesta aba.",
+    "TABS": {
+      "ALL": "Todas",
+      "WAITING": "Aguardando",
+      "AI": "IA respondendo",
+      "HUMAN": "Humanas"
+    },
+    "BADGES": {
+      "NO_REPLY": "Sem resposta",
+      "AI_RESPONDING": "IA respondendo"
+    },
+    "PRIVATE_NOTE": "Nota privada",
+    "ATTACHMENT": "Anexo",
+    "REPLY_PLACEHOLDER": "Responder...",
+    "ATTACH": "Anexar arquivo",
+    "REMOVE_ATTACHMENT": "Remover anexo",
+    "EMOJI": "Emoji",
+    "SEND": "Enviar"
   }
 }

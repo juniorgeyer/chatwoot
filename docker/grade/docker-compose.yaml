@@ -1,0 +1,51 @@
+# Chatwoot local para testar a imagem com a visão em grade.
+#   docker compose -f docker/grade/docker-compose.yaml up -d
+#   docker compose -f docker/grade/docker-compose.yaml run --rm rails bundle exec rails db:chatwoot_prepare
+# Painel em http://localhost:3100
+x-chatwoot: &chatwoot
+  image: ${CHATWOOT_IMAGE:-chatwoot-grade:v4.19.0}
+  platform: linux/arm64
+  environment: &env
+    RAILS_ENV: production
+    NODE_ENV: production
+    INSTALLATION_ENV: docker
+    SECRET_KEY_BASE: local-grade-test-only-0123456789abcdef0123456789abcdef0123456789abcdef
+    FRONTEND_URL: http://localhost:3100
+    POSTGRES_HOST: postgres
+    POSTGRES_USERNAME: postgres
+    POSTGRES_PASSWORD: chatwoot
+    POSTGRES_DATABASE: chatwoot
+    REDIS_URL: redis://redis:6379
+    ENABLE_ACCOUNT_SIGNUP: 'false'
+    RAILS_LOG_TO_STDOUT: 'true'
+    ACTIVE_STORAGE_SERVICE: local
+  volumes:
+    - storage_data:/app/storage
+  depends_on: [postgres, redis]
+
+services:
+  rails:
+    <<: *chatwoot
+    ports: ['127.0.0.1:3100:3000']
+    entrypoint: docker/entrypoints/rails.sh
+    command: ['bundle', 'exec', 'rails', 's', '-p', '3000', '-b', '0.0.0.0']
+
+  sidekiq:
+    <<: *chatwoot
+    command: ['bundle', 'exec', 'sidekiq', '-C', 'config/sidekiq.yml']
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: chatwoot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: chatwoot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+
+volumes:
+  storage_data:
+  postgres_data:
