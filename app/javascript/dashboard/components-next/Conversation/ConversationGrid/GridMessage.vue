@@ -30,7 +30,7 @@ const time = computed(() => messageStamp(props.message.created_at, 'HH:mm'));
 
 <template>
   <div
-    class="flex flex-col max-w-[88%] gap-0.5 px-2.5 py-1.5 rounded-lg text-xs leading-snug"
+    class="flex flex-col max-w-[88%] px-2.5 py-1 rounded-lg text-xs leading-snug"
     :class="bubbleClass"
   >
     <span

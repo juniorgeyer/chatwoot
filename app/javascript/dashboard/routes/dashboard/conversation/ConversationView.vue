@@ -8,7 +8,6 @@ import {
 } from 'dashboard/composables/useContactConversationNavigation';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useConversationGridView } from 'dashboard/composables/useConversationGridView';
-import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import ChatList from '../../../components/ChatList.vue';
 import ConversationBox from '../../../components/widgets/conversation/ConversationBox.vue';
 import wootConstants from 'dashboard/constants/globals';
@@ -116,19 +115,6 @@ export default {
   watch: {
     conversationId() {
       this.fetchConversationIfUnavailable();
-    },
-    isGridView(isGridView) {
-      // Switching to the grid from an open conversation goes back to the grid.
-      if (isGridView && this.supportsGridView && this.conversationId) {
-        this.$router.push(
-          conversationListPageURL({
-            accountId: this.accountId,
-            inboxId: this.inboxId,
-            label: this.label,
-            teamId: this.teamId,
-          })
-        );
-      }
     },
   },
 

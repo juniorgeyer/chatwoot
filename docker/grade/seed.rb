@@ -32,7 +32,6 @@ velvet = widget_inbox(account, 'Site Velvet', 'https://velvet.example', '#a855f7
 end
 
 bot = account.agent_bots.find_or_create_by!(name: 'Copiloto') { |b| b.outgoing_url = 'http://127.0.0.1:9/copiloto' }
-[play, velvet].each { |inbox| AgentBotInbox.find_or_create_by!(inbox: inbox, agent_bot: bot, account: account) }
 
 { 'pagamento' => '#ef4444', 'saque' => '#f59e0b', 'bonus' => '#22c55e', 'acesso-conta' => '#3b82f6',
   'kyc' => '#8b5cf6', 'jogo' => '#14b8a6' }.each do |title, color|
@@ -102,9 +101,16 @@ CONVERSATIONS.each_with_index do |(name, inbox, status, priority, label, minutes
     message = conversation.messages.create!(attrs)
     message.update_columns(created_at: started_at + (position * 2).minutes)
   end
+  # Como no handoff real (bot_handoff!), a conversa aberta sai do robô e vai para um atendente.
+  bot_holds = status == :pending
   conversation.update_columns(status: Conversation.statuses[status], priority: priority && Conversation.priorities[priority],
                               last_activity_at: minutes_ago.minutes.ago,
-                              assignee_id: status == :open ? agents[index % agents.size].id : nil)
+                              assignee_id: bot_holds ? nil : agents[index % agents.size].id,
+                              assignee_agent_bot_id: bot_holds ? bot.id : nil, ai_assignee_type: bot_holds ? 'AgentBot' : nil)
 end
+
+# O robô entra nas caixas só agora: antes disso, cada mensagem do seed chamaria
+# o webhook (inexistente) e o Chatwoot abriria a conversa por erro com o robô.
+[play, velvet].each { |inbox| AgentBotInbox.find_or_create_by!(inbox: inbox, agent_bot: bot, account: account) }
 
 puts "Conversas: #{account.conversations.group(:status).count}"

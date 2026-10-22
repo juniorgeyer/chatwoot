@@ -64,7 +64,7 @@ const subject = computed(
 
 <template>
   <article
-    class="relative flex flex-col h-[19rem] min-w-0 gap-2 p-3 rounded-xl border border-n-weak border-l-4 bg-n-solid-2 cursor-pointer transition-colors hover:bg-n-solid-3"
+    class="relative flex flex-col h-[max(15rem,calc((100dvh-7.5rem)/3))] min-w-0 gap-2 p-3 rounded-xl border border-n-weak border-l-4 bg-n-solid-2 cursor-pointer transition-colors hover:bg-n-solid-3"
     :class="accentClass"
     @click="emit('open', conversation)"
   >
@@ -122,8 +122,9 @@ const subject = computed(
       </span>
     </header>
 
+    <!-- The oldest bubble may not fit; fade it out instead of cutting it. -->
     <div
-      class="flex flex-col justify-end flex-1 min-h-0 gap-1.5 overflow-hidden"
+      class="flex flex-col justify-end flex-1 min-h-0 gap-1.5 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_1.5rem)]"
     >
       <GridMessage
         v-for="message in messages"

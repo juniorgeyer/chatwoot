@@ -1,9 +1,11 @@
 <script setup>
 import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { formatNumber } from '@chatwoot/utils';
 import wootConstants from 'dashboard/constants/globals';
 import { useConversationGridView } from 'dashboard/composables/useConversationGridView';
+import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 
 import ConversationBasicFilter from './widgets/conversation/ConversationBasicFilter.vue';
 import SwitchLayout from 'dashboard/routes/dashboard/conversation/search/SwitchLayout.vue';
@@ -31,6 +33,24 @@ const emit = defineEmits([
 
 const { uiSettings, updateUISettings } = useUISettings();
 const { setGridView } = useConversationGridView();
+const route = useRoute();
+const router = useRouter();
+
+// The grid replaces the list and the open conversation, so leave the
+// conversation for its list page.
+const showGridView = () => {
+  setGridView(true);
+  const { accountId, conversation_id: conversationId } = route.params;
+  if (!conversationId) return;
+  router.push(
+    conversationListPageURL({
+      accountId,
+      inboxId: route.params.inbox_id,
+      label: route.params.label,
+      teamId: route.params.teamId,
+    })
+  );
+};
 
 const onBasicFilterChange = (value, type) => {
   emit('basicFilterChange', value, type);
@@ -186,7 +206,7 @@ const toggleConversationLayout = () => {
         xs
         faded
         class="flex-shrink-0 md:inline-flex hidden"
-        @click="setGridView(true)"
+        @click="showGridView"
       />
       <SwitchLayout
         :is-on-expanded-layout="isOnExpandedLayout"
