@@ -69,6 +69,8 @@ class AutoAssignment::AssignmentService
     agents = filter_agents_by_team(inbox.available_agents, conversation)
     return nil if agents.nil?
 
+    agents = filter_agents_by_assignment_limit(agents)
+
     agents = filter_agents_by_rate_limit(agents)
     return nil if agents.empty?
 
@@ -83,6 +85,14 @@ class AutoAssignment::AssignmentService
 
     team_member_ids = team.members.ids
     agents.where(user_id: team_member_ids)
+  end
+
+  # Multiplas fork: honour the inbox max_assignment_limit (see InboxAssignmentLimit).
+  def filter_agents_by_assignment_limit(agents)
+    full_user_ids = inbox.user_ids_at_assignment_limit
+    return agents if full_user_ids.empty?
+
+    agents.where.not(user_id: full_user_ids)
   end
 
   def filter_agents_by_rate_limit(agents)

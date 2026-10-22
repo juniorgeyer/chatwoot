@@ -45,6 +45,7 @@ class Inbox < ApplicationRecord
   include OutOfOffisable
   include AccountCacheRevalidator
   include InboxAgentAvailability
+  include InboxAssignmentLimit
   include InboxBrandedEmailLayoutable
   include InboxBotStatus
 
@@ -200,7 +201,7 @@ class Inbox < ApplicationRecord
   end
 
   def member_ids_with_assignment_capacity
-    members.ids
+    members.ids - user_ids_at_assignment_limit
   end
 
   def auto_assignment_v2_enabled?

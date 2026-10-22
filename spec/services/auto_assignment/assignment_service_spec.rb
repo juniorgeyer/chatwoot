@@ -462,4 +462,46 @@ RSpec.describe AutoAssignment::AssignmentService do
       end
     end
   end
+
+  # Multiplas fork: inbox max_assignment_limit is enforced in CE (InboxAssignmentLimit).
+  describe 'max_assignment_limit' do
+    let(:rate_limiter) { instance_double(AutoAssignment::RateLimiter) }
+    let(:round_robin_selector) { instance_double(AutoAssignment::RoundRobinSelector) }
+
+    before do
+      create(:inbox_member, inbox: inbox, user: agent2)
+      allow(OnlineStatusTracker).to receive(:get_available_users)
+        .and_return({ agent.id.to_s => 'online', agent2.id.to_s => 'online' })
+      allow(AutoAssignment::RoundRobinSelector).to receive(:new).and_return(round_robin_selector)
+      allow(round_robin_selector).to receive(:select_agent) { |agents| agents.min_by(&:user_id)&.user }
+      allow(AutoAssignment::RateLimiter).to receive(:new).and_return(rate_limiter)
+      allow(rate_limiter).to receive(:within_limit?).and_return(true)
+      allow(rate_limiter).to receive(:track_assignment)
+    end
+
+    it 'skips agents that reached the limit' do
+      inbox.update!(auto_assignment_config: { 'max_assignment_limit' => 1 })
+      first_agent, second_agent = [agent, agent2].sort_by(&:id)
+      create(:conversation, inbox: inbox, assignee: first_agent, status: :open)
+      conv = create(:conversation, inbox: inbox, status: 'open')
+      conv.update!(assignee_id: nil)
+
+      service.perform_bulk_assignment(limit: 5)
+
+      expect(conv.reload.assignee).to eq(second_agent)
+    end
+
+    it 'leaves the conversation unassigned when every agent is full' do
+      inbox.update!(auto_assignment_config: { 'max_assignment_limit' => 1 })
+      create(:conversation, inbox: inbox, assignee: agent, status: :open)
+      create(:conversation, inbox: inbox, assignee: agent2, status: :open)
+      conv = create(:conversation, inbox: inbox, status: 'open')
+      conv.update!(assignee_id: nil)
+
+      assigned_count = service.perform_bulk_assignment(limit: 5)
+
+      expect(assigned_count).to eq(0)
+      expect(conv.reload.assignee).to be_nil
+    end
+  end
 end
