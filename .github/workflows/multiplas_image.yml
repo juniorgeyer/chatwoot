@@ -1,0 +1,138 @@
+# Multiplas fork: tests what the fork changes, then builds the CE image
+# (linux/arm64, the ECS Fargate platform) and pushes it to Amazon ECR.
+#
+# Runs on pushes to `multiplas` and by hand. AWS access is OIDC only: the role
+# trusts nothing but this repository's `multiplas` branch, so pull requests and
+# other branches can run the tests but never push an image.
+#
+# Image tags: <chatwoot version>-multiplas.<run number> and the commit sha.
+# Deploying is a separate step (deploy/chatwoot.md in livechat-copilot).
+
+name: Multiplas image
+
+on:
+  push:
+    branches: [multiplas]
+  pull_request:
+    branches: [multiplas]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: sa-east-1
+  ECR_REPOSITORY: chatwoot
+  AWS_ROLE: arn:aws:iam::743987184305:role/chatwoot-github-ecr
+
+jobs:
+  specs:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ''
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --mount type=tmpfs,destination=/var/lib/postgresql/data
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: --entrypoint redis-server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Rubocop on the fork's Ruby files
+        run: |
+          bundle exec rubocop \
+            app/models/concerns/inbox_assignment_limit.rb \
+            app/models/inbox.rb \
+            app/services/auto_assignment/assignment_service.rb \
+            spec/models/concerns/inbox_assignment_limit_spec.rb \
+            spec/services/auto_assignment/assignment_service_spec.rb
+      - name: Database
+        run: bundle exec rake db:create db:schema:load
+      - name: Specs touched by the fork
+        run: |
+          bundle exec rspec \
+            spec/models/concerns/inbox_assignment_limit_spec.rb \
+            spec/services/auto_assignment/assignment_service_spec.rb \
+            spec/models/inbox_spec.rb
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm i --frozen-lockfile
+      - name: Grid specs and lint
+        run: |
+          TZ=UTC pnpm exec vitest run --no-cache app/javascript/dashboard/components-next/Conversation/ConversationGrid
+          pnpm exec eslint app/javascript/dashboard/components-next/Conversation/ConversationGrid \
+            app/javascript/dashboard/composables/useConversationGridView.js
+
+  image:
+    needs: [specs, frontend]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-22.04-arm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: CE edition, no enterprise code
+        run: |
+          rm -rf enterprise spec/enterprise
+          echo -en '\nENV CW_EDITION="ce"' >> docker/Dockerfile
+
+      - name: Tags
+        run: |
+          VERSION=$(ruby -ryaml -e 'puts YAML.load_file("config/app.yml")["shared"]["version"]')
+          echo "IMAGE_TAG=v${VERSION}-multiplas.${{ github.run_number }}" >> "$GITHUB_ENV"
+          echo "SHA_TAG=sha-${GITHUB_SHA::12}" >> "$GITHUB_ENV"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/arm64
+          push: true
+          provenance: false
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.SHA_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "### Image" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}\`" >> "$GITHUB_STEP_SUMMARY"

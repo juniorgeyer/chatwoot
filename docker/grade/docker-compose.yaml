@@ -1,9 +1,11 @@
-# Chatwoot local para testar a imagem com a visão em grade.
+# Chatwoot local para testar uma imagem do fork (grade, limite por atendente).
+# A imagem vem do ECR (workflow "Multiplas image"); para testar outra:
+#   CHATWOOT_IMAGE=743987184305.dkr.ecr.sa-east-1.amazonaws.com/chatwoot:<tag>
 #   docker compose -f docker/grade/docker-compose.yaml up -d
 #   docker compose -f docker/grade/docker-compose.yaml run --rm rails bundle exec rails db:chatwoot_prepare
 # Painel em http://localhost:3100
 x-chatwoot: &chatwoot
-  image: ${CHATWOOT_IMAGE:-chatwoot-grade:v4.19.0}
+  image: ${CHATWOOT_IMAGE:?defina CHATWOOT_IMAGE com uma tag do ECR}
   platform: linux/arm64
   environment: &env
     RAILS_ENV: production
