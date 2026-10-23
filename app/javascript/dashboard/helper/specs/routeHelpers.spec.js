@@ -82,7 +82,11 @@ describe('#validateLoggedInRoutes', () => {
     it('sends other routes to the profile settings', () => {
       expect(
         validateLoggedInRoutes(
-          { name: 'home', params: { accountId: 1 }, meta: { permissions: ['agent'] } },
+          {
+            name: 'home',
+            params: { accountId: 1 },
+            meta: { permissions: ['agent'] },
+          },
           user
         )
       ).toEqual('accounts/1/profile/settings');
