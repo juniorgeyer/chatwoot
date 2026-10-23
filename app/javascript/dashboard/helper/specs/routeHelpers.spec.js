@@ -74,6 +74,32 @@ describe('#validateLoggedInRoutes', () => {
       ).toEqual(`app/login`);
     });
   });
+  describe('when a temporary password must be changed (Multiplas fork)', () => {
+    const user = {
+      custom_attributes: { must_change_password: true },
+      accounts: [{ id: 1, role: 'agent', status: 'active' }],
+    };
+    it('sends other routes to the profile settings', () => {
+      expect(
+        validateLoggedInRoutes(
+          { name: 'home', params: { accountId: 1 }, meta: { permissions: ['agent'] } },
+          user
+        )
+      ).toEqual('accounts/1/profile/settings');
+    });
+    it('lets the profile settings route through', () => {
+      expect(
+        validateLoggedInRoutes(
+          {
+            name: 'profile_settings_index',
+            params: { accountId: 1 },
+            meta: { permissions: ['agent'] },
+          },
+          user
+        )
+      ).toBeNull();
+    });
+  });
   describe('when account access is available', () => {
     describe('when account is suspended', () => {
       it('return suspended route', () => {

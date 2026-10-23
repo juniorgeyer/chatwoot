@@ -117,4 +117,40 @@ RSpec.describe AgentBuilder, type: :model do
       end
     end
   end
+
+  # Multiplas fork: temporary password chosen by the admin.
+  describe '#perform with a temporary password' do
+    let(:params) do
+      { email: email, name: name, inviter: current_user, account: account, role: role, password: 'Provisoria1!' }
+    end
+
+    before { clear_enqueued_jobs }
+
+    it 'creates a confirmed user with that password and flags the change' do
+      user = agent_builder.perform
+
+      expect(user.confirmed?).to be true
+      expect(user.valid_password?('Provisoria1!')).to be true
+      expect(user.custom_attributes['must_change_password']).to be true
+    end
+
+    it 'does not send the invitation email' do
+      expect { agent_builder.perform }.not_to have_enqueued_job(ActionMailer::MailDeliveryJob)
+    end
+
+    it 'keeps an existing user password untouched' do
+      existing = create(:user, email: email, password: 'Existente1!')
+
+      agent_builder.perform
+
+      expect(existing.reload.valid_password?('Existente1!')).to be true
+      expect(existing.custom_attributes['must_change_password']).to be_nil
+    end
+
+    it 'rejects a weak password' do
+      params[:password] = '123'
+
+      expect { agent_builder.perform }.to raise_error(ActiveRecord::RecordInvalid)
+    end
+  end
 end

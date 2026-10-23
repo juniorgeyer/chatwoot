@@ -79,7 +79,8 @@
       "PASSWORD_SECTION": {
         "TITLE": "Password",
         "NOTE": "Updating your password would reset your logins in multiple devices.",
-        "BTN_TEXT": "Change password"
+        "BTN_TEXT": "Change password",
+        "MUST_CHANGE": "Your password was set by an administrator. Change it to continue."
       },
       "SECURITY_SECTION": {
         "TITLE": "Security",

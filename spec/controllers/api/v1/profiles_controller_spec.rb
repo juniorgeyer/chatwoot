@@ -178,6 +178,18 @@ RSpec.describe 'Profile API', type: :request do
         expect(agent.reload.valid_password?('Test1234!')).to be true
       end
 
+      it 'clears must_change_password when the password changes (Multiplas fork)' do
+        agent.update!(custom_attributes: { 'must_change_password' => true })
+
+        put '/api/v1/profile',
+            params: { profile: { current_password: 'Test123!', password: 'Test1234!', password_confirmation: 'Test1234!' } },
+            headers: agent.create_new_auth_token,
+            as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(agent.reload.custom_attributes).not_to have_key('must_change_password')
+      end
+
       it 'does not reset the display name if updates the password' do
         display_name = agent.display_name
 

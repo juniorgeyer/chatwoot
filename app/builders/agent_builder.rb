@@ -17,7 +17,10 @@ class AgentBuilder
   # @param inviter [User] the user who is inviting the agent (Current.user in most cases).
   # @param availability [String] the availability status of the user, defaults to 'offline' if not provided.
   # @param auto_offline [Boolean] the auto offline status of the user.
-  pattr_initialize [:email, { name: '' }, :inviter, :account, { role: :agent }, { availability: :offline }, { auto_offline: false }]
+  # @param password [String] optional temporary password set by the admin (Multiplas fork). When present,
+  #   a new user is confirmed right away, no invitation email is sent and the user must change it on first login.
+  pattr_initialize [:email, { name: '' }, :inviter, :account, { role: :agent }, { availability: :offline }, { auto_offline: false },
+                    { password: nil }]
 
   # Creates a user and account user in a transaction.
   # @return [User] the created user.
@@ -49,12 +52,20 @@ class AgentBuilder
     return user if user
 
     @name = email.split('@').first if @name.blank?
-    temp_password = "1!aA#{SecureRandom.alphanumeric(12)}"
+    temp_password = password.presence || "1!aA#{SecureRandom.alphanumeric(12)}"
     User.new(email: email, name: @name, password: temp_password, password_confirmation: temp_password).tap do |new_user|
       new_user.skip_confirmation_notification!
+      apply_temporary_password(new_user) if password.present?
       new_user.save!
       @new_user = true
     end
+  end
+
+  # Multiplas fork: the admin chose the password, so the account is usable at once and the
+  # dashboard sends the agent to the password form until they replace it.
+  def apply_temporary_password(new_user)
+    new_user.skip_confirmation!
+    new_user.custom_attributes = (new_user.custom_attributes || {}).merge('must_change_password' => true)
   end
 
   # Checks if the user needs confirmation.

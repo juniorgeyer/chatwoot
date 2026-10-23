@@ -14,6 +14,7 @@ const { t } = useI18n();
 
 const agentName = ref('');
 const agentEmail = ref('');
+const agentPassword = ref('');
 const selectedRoleId = ref('agent');
 
 const rules = {
@@ -70,6 +71,7 @@ const addAgent = async () => {
       name: agentName.value,
       email: agentEmail.value,
     };
+    if (agentPassword.value) payload.password = agentPassword.value;
 
     if (selectedRole.value.name.startsWith('custom_')) {
       payload.custom_role_id = selectedRole.value.id;
@@ -145,6 +147,21 @@ const addAgent = async () => {
             @input="v$.agentEmail.$touch"
           />
         </label>
+      </div>
+
+      <div class="w-full">
+        <label>
+          {{ $t('AGENT_MGMT.ADD.FORM.PASSWORD.LABEL') }}
+          <input
+            v-model="agentPassword"
+            type="text"
+            autocomplete="off"
+            :placeholder="$t('AGENT_MGMT.ADD.FORM.PASSWORD.PLACEHOLDER')"
+          />
+        </label>
+        <p class="mt-1 mb-0 text-xs text-n-slate-11">
+          {{ $t('AGENT_MGMT.ADD.FORM.PASSWORD.HELP') }}
+        </p>
       </div>
 
       <div class="flex flex-row justify-end w-full gap-2 px-0 py-2">

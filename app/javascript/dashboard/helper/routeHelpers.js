@@ -62,6 +62,13 @@ export const validateLoggedInRoutes = (to, user) => {
     return `app/login`;
   }
 
+  // Multiplas fork: a temporary password set by an admin must be replaced first.
+  if (user.custom_attributes?.must_change_password) {
+    return to.name === 'profile_settings_index'
+      ? null
+      : `accounts/${to.params.accountId}/profile/settings`;
+  }
+
   const userPermissions = getUserPermissions(user, to.params.accountId);
   if (requiresShopifyBilling(currentAccount)) {
     if (userPermissions.includes('administrator')) {
