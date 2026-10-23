@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { useStore } from 'dashboard/composables/store';
 import { dynamicTime, shortTimestamp } from 'shared/helpers/timeHelper';
 import { CONVERSATION_PRIORITY } from 'shared/constants/messages';
 import {
@@ -29,7 +30,58 @@ const lastActivityAt = computed(() => {
   return timestamp ? shortTimestamp(dynamicTime(timestamp)) : '';
 });
 
-const messages = computed(() => recentMessages(props.conversation, 3));
+// Multiplas fork: every loaded message, in a box that scrolls; scrolling to the
+// top loads the previous page, as the full conversation does.
+const store = useStore();
+const messages = computed(() => recentMessages(props.conversation, Infinity));
+const scroller = useTemplateRef('scroller');
+const isLoadingOlder = ref(false);
+const NEAR_EDGE = 24;
+
+const scrollToBottom = () => {
+  if (scroller.value) scroller.value.scrollTop = scroller.value.scrollHeight;
+};
+
+const loadOlder = async () => {
+  if (isLoadingOlder.value || props.conversation.allMessagesLoaded) return;
+  const before = messages.value[0]?.id;
+  if (!before) return;
+  const box = scroller.value;
+  const fromBottom = box.scrollHeight - box.scrollTop;
+  isLoadingOlder.value = true;
+  try {
+    await store.dispatch('fetchPreviousMessages', {
+      conversationId: props.conversation.id,
+      before,
+    });
+    await nextTick();
+    // Keep the message the agent was reading in place after the prepend.
+    box.scrollTop = box.scrollHeight - fromBottom;
+  } catch {
+    // The card keeps what it has; the drawer shows the full history.
+  } finally {
+    isLoadingOlder.value = false;
+  }
+};
+
+const onScroll = () => {
+  if (scroller.value?.scrollTop < NEAR_EDGE) loadOlder();
+};
+
+onMounted(scrollToBottom);
+
+// New messages stick to the bottom unless the agent scrolled up to read.
+watch(
+  () => messages.value[messages.value.length - 1]?.id,
+  async () => {
+    const box = scroller.value;
+    const atBottom =
+      !box ||
+      box.scrollHeight - box.scrollTop - box.clientHeight < NEAR_EDGE * 4;
+    await nextTick();
+    if (atBottom) scrollToBottom();
+  }
+);
 
 const urgent = computed(() => isUrgent(props.conversation));
 const highPriority = computed(
@@ -122,15 +174,25 @@ const subject = computed(
       </span>
     </header>
 
-    <!-- The oldest bubble may not fit; fade it out instead of cutting it. -->
+    <!-- Scrolls inside the card; the top fades so a cut bubble reads as more above. -->
     <div
-      class="flex flex-col justify-end flex-1 min-h-0 gap-1.5 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_1.5rem)]"
+      ref="scroller"
+      class="flex-1 min-h-0 overflow-y-auto overscroll-contain [mask-image:linear-gradient(to_bottom,transparent,black_1.5rem)]"
+      @scroll.passive="onScroll"
     >
-      <GridMessage
-        v-for="message in messages"
-        :key="message.id"
-        :message="message"
-      />
+      <div class="flex flex-col justify-end min-h-full gap-1.5 pt-4">
+        <p
+          v-if="isLoadingOlder"
+          class="m-0 text-xxs text-center text-n-slate-10"
+        >
+          {{ $t('CONVERSATION_GRID.LOADING_OLDER') }}
+        </p>
+        <GridMessage
+          v-for="message in messages"
+          :key="message.id"
+          :message="message"
+        />
+      </div>
     </div>
 
     <div class="flex items-center gap-1.5 min-w-0 text-xs text-n-slate-11">
