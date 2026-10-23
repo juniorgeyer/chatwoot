@@ -168,6 +168,7 @@
     "REMOVE_ATTACHMENT": "Remove attachment",
     "EMOJI": "Emoji",
     "SEND": "Send",
-    "CLOSE_DRAWER": "Close conversation panel"
+    "CLOSE_DRAWER": "Close conversation panel",
+    "LOADING_OLDER": "Loading earlier messages..."
   }
 }

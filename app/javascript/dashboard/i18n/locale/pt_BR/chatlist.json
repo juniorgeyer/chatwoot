@@ -168,6 +168,7 @@
     "REMOVE_ATTACHMENT": "Remover anexo",
     "EMOJI": "Emoji",
     "SEND": "Enviar",
-    "CLOSE_DRAWER": "Fechar painel da conversa"
+    "CLOSE_DRAWER": "Fechar painel da conversa",
+    "LOADING_OLDER": "Carregando mensagens anteriores..."
   }
 }
