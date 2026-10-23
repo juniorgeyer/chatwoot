@@ -98,7 +98,8 @@ jobs:
             app/javascript/dashboard/helper/routeHelpers.js \
             app/javascript/dashboard/helper/specs/routeHelpers.spec.js \
             app/javascript/dashboard/routes/dashboard/settings/agents/AddAgent.vue \
-            app/javascript/dashboard/routes/dashboard/settings/profile/ChangePassword.vue
+            app/javascript/dashboard/routes/dashboard/settings/profile/ChangePassword.vue \
+            app/javascript/dashboard/routes/dashboard/conversation/ConversationView.vue
 
   image:
     needs: [specs, frontend]

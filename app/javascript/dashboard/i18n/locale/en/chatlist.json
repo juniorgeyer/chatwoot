@@ -163,10 +163,11 @@
     },
     "PRIVATE_NOTE": "Private note",
     "ATTACHMENT": "Attachment",
-    "REPLY_PLACEHOLDER": "Reply...",
+    "REPLY_PLACEHOLDER": "Reply... (/ for canned responses)",
     "ATTACH": "Attach file",
     "REMOVE_ATTACHMENT": "Remove attachment",
     "EMOJI": "Emoji",
-    "SEND": "Send"
+    "SEND": "Send",
+    "CLOSE_DRAWER": "Close conversation panel"
   }
 }

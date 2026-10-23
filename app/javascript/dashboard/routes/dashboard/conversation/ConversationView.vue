@@ -81,6 +81,7 @@ export default {
   },
   data() {
     return {
+      isGridDrawerOpen: false,
       showSearchModal: false,
     };
   },
@@ -195,7 +196,8 @@ export default {
           .then(() => {
             emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE, { messageId });
           });
-      } else {
+      } else if (!this.isGridDrawerOpen) {
+        // Multiplas fork: the grid drawer owns the selected chat while open.
         this.$store.dispatch('clearSelectedState');
       }
     },
@@ -216,6 +218,7 @@ export default {
       :inbox-id="inboxId"
       :label="label"
       :team-id="teamId"
+      @drawer="isGridDrawerOpen = $event"
     />
     <ChatList
       v-if="!showGridView"
