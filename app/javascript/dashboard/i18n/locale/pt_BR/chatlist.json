@@ -163,10 +163,11 @@
     },
     "PRIVATE_NOTE": "Nota privada",
     "ATTACHMENT": "Anexo",
-    "REPLY_PLACEHOLDER": "Responder...",
+    "REPLY_PLACEHOLDER": "Responder... (/ para respostas prontas)",
     "ATTACH": "Anexar arquivo",
     "REMOVE_ATTACHMENT": "Remover anexo",
     "EMOJI": "Emoji",
-    "SEND": "Enviar"
+    "SEND": "Enviar",
+    "CLOSE_DRAWER": "Fechar painel da conversa"
   }
 }

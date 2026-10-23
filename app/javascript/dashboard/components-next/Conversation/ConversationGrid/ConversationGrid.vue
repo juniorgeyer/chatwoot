@@ -1,11 +1,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
-import { useAccount } from 'dashboard/composables/useAccount';
 import { useConversationGridView } from 'dashboard/composables/useConversationGridView';
-import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
 import {
   GRID_STATUSES,
   GRID_TABS,
@@ -18,12 +15,15 @@ import {
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ConversationGridCard from './ConversationGridCard.vue';
+import ConversationGridDrawer from './ConversationGridDrawer.vue';
 
 const props = defineProps({
   inboxId: { type: [String, Number], default: 0 },
   label: { type: String, default: '' },
   teamId: { type: String, default: '' },
 });
+
+const emit = defineEmits(['drawer']);
 
 // Pages of 25 per status: enough to fill the grid several times over.
 const PAGE_SIZE = 25;
@@ -32,8 +32,6 @@ const MESSAGE_FETCH_CONCURRENCY = 4;
 
 const { t } = useI18n();
 const store = useStore();
-const router = useRouter();
-const { accountId } = useAccount();
 const { setGridView } = useConversationGridView();
 
 const allConversations = useMapGetter('getAllConversations');
@@ -157,18 +155,19 @@ watch(
 watch(scope, loadConversations);
 onMounted(loadConversations);
 
-const openConversation = conversation => {
-  router.push(
-    frontendURL(
-      conversationUrl({
-        accountId: accountId.value,
-        activeInbox: props.inboxId,
-        id: conversation.id,
-        label: props.label,
-        teamId: props.teamId,
-      })
-    )
-  );
+// Multiplas fork: open the conversation in a drawer over the grid.
+const isDrawerOpen = ref(false);
+
+const openConversation = async conversation => {
+  await store.dispatch('setActiveChat', { data: conversation });
+  isDrawerOpen.value = true;
+  emit('drawer', true);
+};
+
+const closeDrawer = () => {
+  isDrawerOpen.value = false;
+  store.dispatch('clearSelectedState');
+  emit('drawer', false);
 };
 
 const inboxName = conversation => getInbox.value(conversation.inbox_id)?.name;
@@ -256,5 +255,10 @@ const inboxName = conversation => getInbox.value(conversation.inbox_id)?.name;
         {{ $t('CONVERSATION_GRID.EMPTY') }}
       </p>
     </div>
+    <ConversationGridDrawer
+      v-if="isDrawerOpen"
+      :inbox-id="inboxId"
+      @close="closeDrawer"
+    />
   </section>
 </template>
