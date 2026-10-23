@@ -45,6 +45,10 @@ export default {
     },
   },
   computed: {
+    mustChangePassword() {
+      return !!this.$store.getters.getCurrentUser?.custom_attributes
+        ?.must_change_password;
+    },
     isButtonDisabled() {
       return (
         !this.currentPassword ||
@@ -82,6 +86,12 @@ export default {
 <template>
   <form @submit.prevent="changePassword()">
     <div class="flex flex-col w-full gap-4">
+      <p
+        v-if="mustChangePassword"
+        class="p-3 m-0 text-sm rounded-xl bg-n-amber-3 text-n-amber-12"
+      >
+        {{ $t('PROFILE_SETTINGS.FORM.PASSWORD_SECTION.MUST_CHANGE') }}
+      </p>
       <woot-input
         v-model="currentPassword"
         type="password"

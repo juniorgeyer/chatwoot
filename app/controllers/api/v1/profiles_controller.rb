@@ -13,6 +13,7 @@ class Api::V1::ProfilesController < Api::BaseController
       render_could_not_create_error('Invalid current password') and return unless @user.valid_password?(password_params[:current_password])
 
       @user.update!(password_params.except(:current_password))
+      @user.custom_attributes.delete('must_change_password')
     end
 
     @user.assign_attributes(profile_params)

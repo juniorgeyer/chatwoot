@@ -61,7 +61,12 @@ jobs:
             app/models/inbox.rb \
             app/services/auto_assignment/assignment_service.rb \
             spec/models/concerns/inbox_assignment_limit_spec.rb \
-            spec/services/auto_assignment/assignment_service_spec.rb
+            spec/services/auto_assignment/assignment_service_spec.rb \
+            app/builders/agent_builder.rb \
+            app/controllers/api/v1/accounts/agents_controller.rb \
+            app/controllers/api/v1/profiles_controller.rb \
+            spec/builders/agent_builder_spec.rb \
+            spec/controllers/api/v1/profiles_controller_spec.rb
       - name: Database
         run: bundle exec rake db:create db:schema:load
       - name: Specs touched by the fork
@@ -69,7 +74,10 @@ jobs:
           bundle exec rspec \
             spec/models/concerns/inbox_assignment_limit_spec.rb \
             spec/services/auto_assignment/assignment_service_spec.rb \
-            spec/models/inbox_spec.rb
+            spec/models/inbox_spec.rb \
+            spec/builders/agent_builder_spec.rb \
+            spec/controllers/api/v1/profiles_controller_spec.rb \
+            spec/controllers/api/v1/accounts/agents_controller_spec.rb
 
   frontend:
     runs-on: ubuntu-latest
@@ -83,9 +91,14 @@ jobs:
       - run: pnpm i --frozen-lockfile
       - name: Grid specs and lint
         run: |
-          TZ=UTC pnpm exec vitest run --no-cache app/javascript/dashboard/components-next/Conversation/ConversationGrid
+          TZ=UTC pnpm exec vitest run --no-cache app/javascript/dashboard/components-next/Conversation/ConversationGrid \
+            app/javascript/dashboard/helper/specs/routeHelpers.spec.js
           pnpm exec eslint app/javascript/dashboard/components-next/Conversation/ConversationGrid \
-            app/javascript/dashboard/composables/useConversationGridView.js
+            app/javascript/dashboard/composables/useConversationGridView.js \
+            app/javascript/dashboard/helper/routeHelpers.js \
+            app/javascript/dashboard/helper/specs/routeHelpers.spec.js \
+            app/javascript/dashboard/routes/dashboard/settings/agents/AddAgent.vue \
+            app/javascript/dashboard/routes/dashboard/settings/profile/ChangePassword.vue
 
   image:
     needs: [specs, frontend]

@@ -40,7 +40,12 @@
           "LABEL": "Email Address",
           "PLACEHOLDER": "Please enter an email address of the agent"
         },
-        "SUBMIT": "Add Agent"
+        "SUBMIT": "Add Agent",
+        "PASSWORD": {
+          "LABEL": "Temporary password (optional)",
+          "PLACEHOLDER": "Leave empty to send an invitation email",
+          "HELP": "If set, no email is sent: share it with the agent, who must change it on first login."
+        }
       },
       "API": {
         "SUCCESS_MESSAGE": "Agent added successfully",
