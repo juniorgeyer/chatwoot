@@ -18,6 +18,11 @@ export const GRID_STATUSES = [
 
 const byCreatedAt = (a, b) => a.created_at - b.created_at || a.id - b.id;
 
+// Cards keep their place: the grid is ordered by arrival (conversation id,
+// which never changes), not by last activity, so a new message does not
+// reshuffle it. New conversations land at the end.
+export const byArrival = (a, b) => a.id - b.id;
+
 // The list API seeds `messages` with the latest message only; the grid fetches
 // the earlier page, and realtime events append to the same array.
 export const recentMessages = (conversation, limit = 3) => {

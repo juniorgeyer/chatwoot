@@ -6,6 +6,7 @@ import { useConversationGridView } from 'dashboard/composables/useConversationGr
 import {
   GRID_STATUSES,
   GRID_TABS,
+  byArrival,
   matchesGridScope,
   matchesGridSearch,
   matchesGridTab,
@@ -63,8 +64,20 @@ const conversations = computed(() =>
         matchesGridScope(conversation, scope.value) &&
         matchesGridSearch(conversation, searchQuery.value)
     )
-    .sort((a, b) => b.timestamp - a.timestamp)
+    .sort(byArrival)
 );
+
+// A card that leaves (resolved, snoozed) is taken out of the grid flow at its
+// current box, so the cards after it slide into place while it fades out.
+const pinLeavingCard = el => {
+  const { offsetTop, offsetLeft, offsetWidth, offsetHeight } = el;
+  Object.assign(el.style, {
+    top: `${offsetTop}px`,
+    left: `${offsetLeft}px`,
+    width: `${offsetWidth}px`,
+    height: `${offsetHeight}px`,
+  });
+};
 
 const tabCounts = computed(() =>
   Object.fromEntries(
@@ -235,9 +248,12 @@ const inboxName = conversation => getInbox.value(conversation.inbox_id)?.name;
     </header>
 
     <div class="flex-1 min-h-0 p-4 overflow-y-auto">
-      <div
+      <TransitionGroup
         v-if="visibleConversations.length"
-        class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4"
+        tag="div"
+        name="grid-card"
+        class="relative grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4"
+        @before-leave="pinLeavingCard"
       >
         <ConversationGridCard
           v-for="conversation in visibleConversations"
@@ -247,7 +263,7 @@ const inboxName = conversation => getInbox.value(conversation.inbox_id)?.name;
           :inbox-name="inboxName(conversation)"
           @open="openConversation"
         />
-      </div>
+      </TransitionGroup>
       <p
         v-else-if="!isLoading"
         class="py-16 text-sm text-center text-n-slate-11"
@@ -262,3 +278,25 @@ const inboxName = conversation => getInbox.value(conversation.inbox_id)?.name;
     />
   </section>
 </template>
+
+<style scoped>
+/* Cards slide when a neighbour leaves or arrives; the leaving one fades out
+   pinned at its old box (pinLeavingCard). */
+.grid-card-move,
+.grid-card-enter-active,
+.grid-card-leave-active {
+  transition:
+    transform 300ms ease,
+    opacity 300ms ease;
+}
+
+.grid-card-enter-from,
+.grid-card-leave-to {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.grid-card-leave-active {
+  position: absolute;
+}
+</style>

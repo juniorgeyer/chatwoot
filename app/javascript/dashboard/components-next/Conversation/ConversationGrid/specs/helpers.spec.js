@@ -1,5 +1,6 @@
 import {
   GRID_TABS,
+  byArrival,
   isAiResponding,
   isAwaitingReply,
   matchesGridScope,
@@ -16,6 +17,19 @@ const message = (id, messageType, extra = {}) => ({
 });
 
 describe('ConversationGrid helpers', () => {
+  describe('byArrival', () => {
+    it('keeps cards in arrival order, whatever the last activity', () => {
+      const conversations = [
+        { id: 7, timestamp: 300 },
+        { id: 3, timestamp: 900 },
+        { id: 12, timestamp: 100 },
+      ];
+      expect([...conversations].sort(byArrival).map(c => c.id)).toEqual([
+        3, 7, 12,
+      ]);
+    });
+  });
+
   describe('recentMessages', () => {
     it('returns the last non-activity messages in order', () => {
       const conversation = {
