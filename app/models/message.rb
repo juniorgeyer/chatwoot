@@ -360,7 +360,17 @@ class Message < ApplicationRecord
     end
 
     # Bot responses also clear waiting_since (simpler than checking on next customer message)
-    conversation.update(waiting_since: nil) if bot_response? && !preserve_waiting_since
+    conversation.update(waiting_since: nil) if bot_response? && !preserve_waiting_since && !waiting_for_agent_in_queue?
+  end
+
+  # Multiplas fork: an open conversation with no agent assigned is in the
+  # agents' queue. A bot message there (queue position, "no agents
+  # available") does not answer the contact, who is still waiting for a
+  # human. Clearing waiting_since made the conversation resolvable by
+  # auto_resolve_after even with auto_resolve_ignore_waiting, and it was
+  # closed 10 minutes after the queue notice (night of 2026-10-23).
+  def waiting_for_agent_in_queue?
+    conversation.open? && conversation.assignee_id.nil?
   end
 
   def set_waiting_since_on_incoming_message
